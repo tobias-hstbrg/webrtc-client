@@ -1,6 +1,7 @@
 import {useEffect, useState, useRef} from "react";
 import {RegisterMessage} from "@/app/types/RegisterMessage";
 import {RegisterMessagePayload} from "@/app/types/RegisterMessagePayload";
+import { toast } from "sonner";
 
 const adjectives: string[] = ["Cool", "Happy", "Fast", "Bright", "Silent", "Wild"];
 const animals: string[] = ["Tiger", "Eagle", "Shark", "Panda", "Wolf", "Falcon"];
@@ -36,6 +37,9 @@ export function useWebSocket(url: string) {
         socket.onopen = (event) => {
             console.log("Connected to Auth Server");
             setConnected(true);
+            toast.success("Connected", {
+                description: "You are connected to Auth Server",
+            })
 
             const newPeerName = generatePeerName();
             setPeerName(newPeerName);
@@ -62,11 +66,14 @@ export function useWebSocket(url: string) {
         socket.onclose = () => {
             console.log("Disconnected from Auth Server");
             setConnected(false);
+            toast.info("Disconnected from Auth Server");
         }
 
         return () => {
             socket.close();
-            console.log("Disconnected from Auth Server via cleanup");
+            console.log("Disconnected", {
+                description: "The connection to the Auth Server has been disconnected",
+            });
         }
 
     }, [url]);
