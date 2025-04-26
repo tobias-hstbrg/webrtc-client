@@ -1,38 +1,26 @@
 'use client'
-
-import { useEffect, useState } from 'react'
+import {useEffect, useState} from "react";
 
 export default function WebSocketComponent() {
-    const [messages, setMessages] = useState<string[]>([])
-
+    // State to know if my socket is connected to the "auth" server or not
+    const [connected, setConnected] = useState(false);
     useEffect(() => {
-        const socket = new WebSocket('ws://localhost:8080/ws')
-
-        socket.onmessage = (event) => {
-            setMessages((prev) => [...prev, event.data])
+        const socket = new WebSocket("ws://localhost:8080/ws");
+        socket.onopen = (event) => {
+            console.log("Connected to Auth Server");
+            setConnected(true);
         }
 
-        socket.onopen = () => {
-            console.log('Connected to WebSocket')
+        socket.onclose = () => {
+            console.log("Disconnected from Auth Server");
+            setConnected(false);
         }
 
-        socket.onerror = (err) => {
-            console.error('WebSocket error:', err)
-        }
-
-        return () => {
-            socket.close()
-        }
-    }, [])
+    }, []);
 
     return (
         <div>
-            <h2>WebSocket Messages</h2>
-            <ul>
-                {messages.map((msg, i) => (
-                    <li key={i}>{msg}</li>
-                ))}
-            </ul>
+            {connected ? <p>Connected to server</p> : <p> Connecting...</p>}
         </div>
     )
 }
