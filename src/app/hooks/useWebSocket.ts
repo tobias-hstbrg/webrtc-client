@@ -2,6 +2,8 @@ import {useEffect, useState, useRef} from "react";
 import {RegisterMessage} from "@/app/types/RegisterMessage";
 import {RegisterMessagePayload} from "@/app/types/RegisterMessagePayload";
 import { toast } from "sonner";
+import {ServerMessage} from "@/app/types/ServerMessage";
+import {Peer} from "@/app/types/Peer";
 
 const adjectives: string[] = ["Cool", "Happy", "Fast", "Bright", "Silent", "Wild"];
 const animals: string[] = ["Tiger", "Eagle", "Shark", "Panda", "Wolf", "Falcon"];
@@ -26,6 +28,10 @@ export function useWebSocket(url: string) {
     const [peerName, setPeerName] = useState<string | null>(null);
     // State to track the ID of the peer
     const [peerId, setPeerId] = useState<string | null>(null);
+
+    // Peer List
+    const [peers, setPeers] = useState<Peer[]>([]);
+
     // Reference to the created socket
     const socketRef = useRef<WebSocket | null>(null);
 
@@ -62,6 +68,23 @@ export function useWebSocket(url: string) {
             socket.send(JSON.stringify(registerMessage));
         }
 
+        socket.onmessage = (event) => {
+
+            try {
+                console.log("Received Message", event.data);
+                const data: ServerMessage<Peer[]> = JSON.parse(event.data);
+
+                if (data.type == "peer-list" && Array.isArray(data.payload)) {
+                    console.log("Setting peers:", data.payload);
+                    setPeers(data.payload);
+                }
+            } catch(error) {
+                console.error("Error parsing socket message: ", error);
+            }
+
+        }
+
+
         // Behavior of page for when the socket connection is closed.
         socket.onclose = () => {
             console.log("Disconnected from Auth Server");
@@ -77,5 +100,5 @@ export function useWebSocket(url: string) {
         }
 
     }, [url]);
-    return {connected, peerName, peerId};
+    return {connected, peerName, peerId, peers};
 }
