@@ -11,6 +11,7 @@ export default function WebSocketComponent() {
             setConnected(true);
         }
 
+        // Behavior of page for when the socket connection is closed.
         socket.onclose = () => {
             console.log("Disconnected from Auth Server");
             setConnected(false);
