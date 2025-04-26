@@ -1,24 +1,14 @@
-'use client'
 import {useEffect, useState, useRef} from "react";
+import {RegisterMessage} from "@/app/types/RegisterMessage";
+import {RegisterMessagePayload} from "@/app/types/RegisterMessagePayload";
 
 const adjectives: string[] = ["Cool", "Happy", "Fast", "Bright", "Silent", "Wild"];
 const animals: string[] = ["Tiger", "Eagle", "Shark", "Panda", "Wolf", "Falcon"];
 
-interface RegisterMessage {
-    type: "register";
-    source: string;
-    payload: RegisterMessagePayload
-}
-
-interface RegisterMessagePayload {
-    peerId: string;
-    displayName: string;
-}
-
 // Generates a random name from a selection of words
 function generatePeerName(): string {
     const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const animal = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const animal = animals[Math.floor(Math.random() * adjectives.length)];
     return `${adj}@${animal}`;
 }
 
@@ -28,15 +18,16 @@ function generatePeerId(): string {
     return "peer-" + Math.floor(Math.random() * 10000).toString();
 }
 
-export default function WebSocketComponent() {
+export function useWebSocket(url: string) {
     // State to know if the socket is connected to the "auth" server or not
     const [connected, setConnected] = useState<boolean>(false);
     // State to track the name of this client
     const [peerName, setPeerName] = useState<string | null>(null);
     // State to track the ID of the peer
     const [peerId, setPeerId] = useState<string | null>(null);
-
+    // Reference to the created socket
     const socketRef = useRef<WebSocket | null>(null);
+
 
     useEffect(() => {
         const socket = new WebSocket("ws://localhost:8080/ws");
@@ -78,11 +69,6 @@ export default function WebSocketComponent() {
             console.log("Disconnected from Auth Server via cleanup");
         }
 
-    }, []);
-
-    return (
-        <div>
-            {connected ? <p>Connected to server</p> : <p> Connecting...</p>}
-        </div>
-    )
+    }, [url]);
+    return {connected, peerName, peerId};
 }

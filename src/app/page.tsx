@@ -1,4 +1,4 @@
-import WebSocketComponent from "@/app/websocketComponent";
+import WebSocketComponent from "@/app/components/websocketComponent";
 
 export default function Home() {
   return (
