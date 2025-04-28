@@ -64,7 +64,7 @@ export function useWebSocket(url: string) {
                 clearInterval(interval);
             }
 
-        }, 40000)
+        }, 20000)
 
         socket.onopen = (event) => {
             console.log("Connected to Auth Server");
@@ -101,7 +101,7 @@ export function useWebSocket(url: string) {
                 if (data.type == "peer-list" && Array.isArray(data.payload)) {
                     console.log("Setting peers:", data.payload);
                     setPeers(data.payload);
-                }else if (data.type == "heartbeat_ack" && Array.isArray(data.payload)) {
+                }else if (data.type == "heartbeat_ack") {
                     console.log("Server acknowledged heartbeat:", data.payload);
                 }
             } catch(error) {
