@@ -4,6 +4,8 @@ import {RegisterMessagePayload} from "@/app/types/RegisterMessagePayload";
 import { toast } from "sonner";
 import {ServerMessage} from "@/app/types/ServerMessage";
 import {Peer} from "@/app/types/Peer";
+import {HeartbeatMessage} from "@/app/types/heartbeatMessage";
+import {setInterval} from "timers";
 
 const adjectives: string[] = ["Cool", "Happy", "Fast", "Bright", "Silent", "Wild"];
 const animals: string[] = ["Tiger", "Eagle", "Shark", "Panda", "Wolf", "Falcon"];
@@ -19,6 +21,17 @@ function generatePeerName(): string {
 // ID range 0 - 10000
 function generatePeerId(): string {
     return "peer-" + Math.floor(Math.random() * 10000).toString();
+}
+
+function sendHeartbeat(socket: WebSocket, peerId: string): void {
+    const heartbeatMessage: HeartbeatMessage = {
+        type: "heartbeat",
+        source: peerId,
+    }
+
+    socket.send(JSON.stringify(heartbeatMessage));
+    console.log("Heartbeat send to server!");
+
 }
 
 export function useWebSocket(url: string) {
@@ -40,6 +53,19 @@ export function useWebSocket(url: string) {
         const socket = new WebSocket("ws://localhost:8080/ws");
         socketRef.current = socket;
 
+        const newPeerName = generatePeerName();
+        const peerId: string = generatePeerId();
+
+        const interval = setInterval(() => {
+            if(socket.readyState == WebSocket.OPEN) {
+                sendHeartbeat(socket, peerId)
+            } else {
+                console.warn(`WebSocket is not open. Stopping heartbeat`);
+                clearInterval(interval);
+            }
+
+        }, 40000)
+
         socket.onopen = (event) => {
             console.log("Connected to Auth Server");
             setConnected(true);
@@ -47,11 +73,9 @@ export function useWebSocket(url: string) {
                 description: "You are connected to Auth Server",
             })
 
-            const newPeerName = generatePeerName();
             setPeerName(newPeerName);
             console.log("Generated PeerName", newPeerName);
 
-            const peerId: string = generatePeerId();
             setPeerId(peerId);
 
             const messagePayload: RegisterMessagePayload = {
@@ -77,6 +101,8 @@ export function useWebSocket(url: string) {
                 if (data.type == "peer-list" && Array.isArray(data.payload)) {
                     console.log("Setting peers:", data.payload);
                     setPeers(data.payload);
+                }else if (data.type == "heartbeat_ack" && Array.isArray(data.payload)) {
+                    console.log("Server acknowledged heartbeat:", data.payload);
                 }
             } catch(error) {
                 console.error("Error parsing socket message: ", error);
@@ -89,6 +115,8 @@ export function useWebSocket(url: string) {
         socket.onclose = () => {
             console.log("Disconnected from Auth Server");
             setConnected(false);
+            clearInterval(interval);
+            console.warn(`Socket closed, stopping heartbeat`);
             toast.info("Disconnected from Auth Server");
         }
 
